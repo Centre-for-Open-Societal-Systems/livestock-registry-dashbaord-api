@@ -1,0 +1,19 @@
+services:
+  api:
+    build: .
+    container_name: livestock-registry-dashboard-api
+    ports:
+      # Bound to localhost: the service has no authentication and must not be
+      # reachable from other hosts. Its only client is the dashboards BFF.
+      - "127.0.0.1:${API_PORT:-8006}:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL (a role with SELECT on the lr_rpt_* views)}
+      PGPASSWORD: ${PGPASSWORD:-}
+      DB_POOL_MIN_SIZE: ${DB_POOL_MIN_SIZE:-1}
+      DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-5}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-["http://localhost:3000"]}
+    # Reaches a registry database published on the host (a local registry
+    # stack) as host.docker.internal.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

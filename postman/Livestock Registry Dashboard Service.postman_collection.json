@@ -1,0 +1,1259 @@
+{
+  "info": {
+    "_postman_id": "b0dbaff5-70a5-5e9f-a95b-81f86d9f4175",
+    "name": "Livestock Registry Dashboard Service",
+    "description": "Read-only aggregate API of the livestock registry, used by the OAN dashboards.\n\n- Every chart: `GET {{baseUrl}}/api/v1/charts/<chartId>` returns a JSON array of rows.\n- Filters (all optional, combined with AND) are included on each request but disabled; enable the ones you need. `all` or omitted means no filter.\n  - `region`, `zone`, `woreda`, `kebele`: P-codes, in any of the forms `ET04`, `region-ET04`, `REGION_ET04`.\n  - `recordState`: record status, case-insensitive. Without it, only ACTIVE records are counted (except `livestockByRecordState`).\n  - `state`: approval-workflow state (`DRAFT`, `KEBELE_APPROVED`, ..., `VERIFIED`).\n  - `species`: lookup key (`LIVESTOCK_SPECIES_CATTLE`), its last part (`CATTLE`) or the label.\n- Animal counts are head counts: a flock or set of hives recorded as one line counts its quantity.\n- The collection-level test checks status 200 and the exact response keys per chart. Example responses come from the service test fixture.\n\nSet `baseUrl` (collection variable, or the environment) to the service URL. The service has no authentication and is meant to be reachable on the private network only.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        },
+        "description": "Liveness and database connectivity (runs SELECT 1)."
+      },
+      "response": [
+        {
+          "name": "Healthy",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "{\"status\": \"ok\"}"
+        }
+      ]
+    },
+    {
+      "name": "livestockKpis",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/livestockKpis",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "livestockKpis"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Headline totals: holdings, keepers, female keepers, woredas reporting, animals, species and breeds. One row.\n\nReturns a JSON array of rows with keys: `animals`, `breeds_tracked`, `female_keepers`, `holdings`, `keepers`, `species_tracked`, `woredas_reporting`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/livestockKpis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "livestockKpis"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"holdings\": 4, \"keepers\": 3, \"female_keepers\": 1, \"woredas_reporting\": 4, \"animals\": 17, \"species_tracked\": 3, \"breeds_tracked\": 3}]"
+        }
+      ]
+    },
+    {
+      "name": "livestockBySpecies",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/livestockBySpecies",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "livestockBySpecies"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Animals and keepers per species, largest first.\n\nReturns a JSON array of rows with keys: `animals`, `keepers`, `species`, `species_code`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/livestockBySpecies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "livestockBySpecies"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"species\": \"Chicken\", \"species_code\": \"LIVESTOCK_SPECIES_CHICKEN\", \"animals\": 12, \"keepers\": 1}, {\"species\": \"Cattle\", \"species_code\": \"LIVESTOCK_SPECIES_CATTLE\", \"animals\": 3, \"keepers\": 2}, {\"species\": \"Goat\", \"species_code\": \"LIVESTOCK_SPECIES_GOAT\", \"animals\": 2, \"keepers\": 2}]"
+        }
+      ]
+    },
+    {
+      "name": "livestockByBreed",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/livestockByBreed",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "livestockByBreed"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Animals per breed, largest first.\n\nReturns a JSON array of rows with keys: `animals`, `breed`, `breed_code`, `species`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/livestockByBreed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "livestockByBreed"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"breed\": \"Begait\", \"breed_code\": \"LIVESTOCK_BREED_BEGAIT_GOAT\", \"species\": \"Goat\", \"animals\": 2}, {\"breed\": \"Boran\", \"breed_code\": \"LIVESTOCK_BREED_BORAN\", \"species\": \"Cattle\", \"animals\": 2}, {\"breed\": \"Horro\", \"breed_code\": \"LIVESTOCK_BREED_HORRO\", \"species\": \"Cattle\", \"animals\": 1}]"
+        }
+      ]
+    },
+    {
+      "name": "livestockKeepersByRegion",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/livestockKeepersByRegion",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "livestockKeepersByRegion"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Keepers (under `farmers`, which the map reads) and animals per region.\n\nReturns a JSON array of rows with keys: `animals`, `farmers`, `region`, `region_code`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/livestockKeepersByRegion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "livestockKeepersByRegion"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"region\": \"Afar\", \"region_code\": \"ET02\", \"farmers\": 1, \"animals\": 13}, {\"region\": \"Oromia\", \"region_code\": \"ET04\", \"farmers\": 1, \"animals\": 3}, {\"region\": \"Oromiya\", \"region_code\": \"Unknown\", \"farmers\": 1, \"animals\": 1}]"
+        }
+      ]
+    },
+    {
+      "name": "livestockKeepersByZone",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/livestockKeepersByZone",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "livestockKeepersByZone"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Keepers and animals per zone.\n\nReturns a JSON array of rows with keys: `animals`, `farmers`, `zone`, `zone_code`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/livestockKeepersByZone",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "livestockKeepersByZone"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"zone\": \"Kilbet Rasu\", \"zone_code\": \"ET0202\", \"farmers\": 1, \"animals\": 13}, {\"zone\": \"East Shewa\", \"zone_code\": \"ET0407\", \"farmers\": 1, \"animals\": 3}, {\"zone\": \"E. Shoa\", \"zone_code\": \"Unknown\", \"farmers\": 1, \"animals\": 1}]"
+        }
+      ]
+    },
+    {
+      "name": "livestockKeepersByWoreda",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/livestockKeepersByWoreda",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "livestockKeepersByWoreda"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Keepers and animals per woreda.\n\nReturns a JSON array of rows with keys: `animals`, `farmers`, `woreda`, `woreda_code`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/livestockKeepersByWoreda",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "livestockKeepersByWoreda"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"woreda\": \"Afdera\", \"woreda_code\": \"ET020207\", \"farmers\": 1, \"animals\": 13}, {\"woreda\": \"Adama\", \"woreda_code\": \"ET040703\", \"farmers\": 1, \"animals\": 1}, {\"woreda\": \"Ada'a\", \"woreda_code\": \"ET040706\", \"farmers\": 1, \"animals\": 2}, {\"woreda\": \"Adaa\", \"woreda_code\": \"Unknown\", \"farmers\": 1, \"animals\": 1}]"
+        }
+      ]
+    },
+    {
+      "name": "livestockKeepersByKebele",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/livestockKeepersByKebele",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "livestockKeepersByKebele"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Keepers and animals per kebele.\n\nReturns a JSON array of rows with keys: `animals`, `farmers`, `kebele`, `kebele_code`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/livestockKeepersByKebele",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "livestockKeepersByKebele"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"kebele\": \"Adkuma\", \"kebele_code\": \"ET020207888009\", \"farmers\": 1, \"animals\": 13}, {\"kebele\": \"Bofa\", \"kebele_code\": \"ET040703888001\", \"farmers\": 1, \"animals\": 1}, {\"kebele\": \"Dire Arerti\", \"kebele_code\": \"ET040706888019\", \"farmers\": 1, \"animals\": 2}, {\"kebele\": \"DA\", \"kebele_code\": \"Unknown\", \"farmers\": 1, \"animals\": 1}]"
+        }
+      ]
+    },
+    {
+      "name": "livestockTopWoredas",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/livestockTopWoredas",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "livestockTopWoredas"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "The eight woredas with the most keepers.\n\nReturns a JSON array of rows with keys: `animals`, `farmers`, `woreda`, `woreda_code`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/livestockTopWoredas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "livestockTopWoredas"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"woreda\": \"Afdera\", \"woreda_code\": \"ET020207\", \"farmers\": 1, \"animals\": 13}, {\"woreda\": \"Ada'a\", \"woreda_code\": \"ET040706\", \"farmers\": 1, \"animals\": 2}, {\"woreda\": \"Adama\", \"woreda_code\": \"ET040703\", \"farmers\": 1, \"animals\": 1}, {\"woreda\": \"Adaa\", \"woreda_code\": \"Unknown\", \"farmers\": 1, \"animals\": 1}]"
+        }
+      ]
+    },
+    {
+      "name": "herdHealthSplit",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/herdHealthSplit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "herdHealthSplit"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Animals per health status.\n\nReturns a JSON array of rows with keys: `animals`, `health_status`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/herdHealthSplit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "herdHealthSplit"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"health_status\": \"HEALTHY\", \"animals\": 15}, {\"health_status\": \"QUARANTINED\", \"animals\": 1}, {\"health_status\": \"SICK\", \"animals\": 1}]"
+        }
+      ]
+    },
+    {
+      "name": "livestockVaccinationStatus",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/livestockVaccinationStatus",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "livestockVaccinationStatus"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Animals per vaccination status.\n\nReturns a JSON array of rows with keys: `animals`, `vaccination_status`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/livestockVaccinationStatus",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "livestockVaccinationStatus"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"vaccination_status\": \"UNKNOWN\", \"animals\": 12}, {\"vaccination_status\": \"NONE\", \"animals\": 2}, {\"vaccination_status\": \"UP_TO_DATE\", \"animals\": 2}, {\"vaccination_status\": \"OVERDUE\", \"animals\": 1}]"
+        }
+      ]
+    },
+    {
+      "name": "livestockBySex",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/livestockBySex",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "livestockBySex"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Animals per sex.\n\nReturns a JSON array of rows with keys: `animals`, `sex`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/livestockBySex",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "livestockBySex"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"sex\": \"UNKNOWN\", \"animals\": 12}, {\"sex\": \"FEMALE\", \"animals\": 3}, {\"sex\": \"MALE\", \"animals\": 2}]"
+        }
+      ]
+    },
+    {
+      "name": "livestockTrendByMonth",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/livestockTrendByMonth",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "livestockTrendByMonth"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Holdings, keepers and animals per registration month.\n\nReturns a JSON array of rows with keys: `animals`, `farmers`, `holdings`, `period`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/livestockTrendByMonth",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "livestockTrendByMonth"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"period\": \"2026-03\", \"farmers\": 1, \"holdings\": 1, \"animals\": 2}, {\"period\": \"2026-04\", \"farmers\": 2, \"holdings\": 2, \"animals\": 14}]"
+        }
+      ]
+    },
+    {
+      "name": "livestockByState",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/livestockByState",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "livestockByState"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Holdings per approval-workflow state.\n\nReturns a JSON array of rows with keys: `holdings`, `state`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/livestockByState",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "livestockByState"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"state\": \"VERIFIED\", \"holdings\": 2}, {\"state\": \"DRAFT\", \"holdings\": 1}, {\"state\": \"KEBELE_APPROVED\", \"holdings\": 1}]"
+        }
+      ]
+    },
+    {
+      "name": "livestockByRecordState",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/charts/livestockByRecordState",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "charts",
+            "livestockByRecordState"
+          ],
+          "query": [
+            {
+              "key": "region",
+              "value": "ET04",
+              "disabled": true
+            },
+            {
+              "key": "zone",
+              "value": "ET0407",
+              "disabled": true
+            },
+            {
+              "key": "woreda",
+              "value": "ET040706",
+              "disabled": true
+            },
+            {
+              "key": "kebele",
+              "value": "",
+              "disabled": true
+            },
+            {
+              "key": "recordState",
+              "value": "ACTIVE",
+              "disabled": true
+            },
+            {
+              "key": "state",
+              "value": "VERIFIED",
+              "disabled": true
+            },
+            {
+              "key": "species",
+              "value": "CATTLE",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Holdings per record status (sees every status).\n\nReturns a JSON array of rows with keys: `holdings`, `record_state`."
+      },
+      "response": [
+        {
+          "name": "Example (test fixture data)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/charts/livestockByRecordState",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts",
+                "livestockByRecordState"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": null,
+          "cookie": [],
+          "body": "[{\"record_state\": \"ACTIVE\", \"holdings\": 4}, {\"record_state\": \"INACTIVE\", \"holdings\": 1}]"
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Contract checks for every request. Keys per chart mirror CONTRACT in the service's tests/test_charts.py.",
+          "const CONTRACT = {\"livestockKpis\": [\"animals\", \"breeds_tracked\", \"female_keepers\", \"holdings\", \"keepers\", \"species_tracked\", \"woredas_reporting\"], \"livestockBySpecies\": [\"animals\", \"keepers\", \"species\", \"species_code\"], \"livestockByBreed\": [\"animals\", \"breed\", \"breed_code\", \"species\"], \"livestockKeepersByRegion\": [\"animals\", \"farmers\", \"region\", \"region_code\"], \"livestockKeepersByZone\": [\"animals\", \"farmers\", \"zone\", \"zone_code\"], \"livestockKeepersByWoreda\": [\"animals\", \"farmers\", \"woreda\", \"woreda_code\"], \"livestockKeepersByKebele\": [\"animals\", \"farmers\", \"kebele\", \"kebele_code\"], \"livestockTopWoredas\": [\"animals\", \"farmers\", \"woreda\", \"woreda_code\"], \"herdHealthSplit\": [\"animals\", \"health_status\"], \"livestockVaccinationStatus\": [\"animals\", \"vaccination_status\"], \"livestockBySex\": [\"animals\", \"sex\"], \"livestockTrendByMonth\": [\"animals\", \"farmers\", \"holdings\", \"period\"], \"livestockByState\": [\"holdings\", \"state\"], \"livestockByRecordState\": [\"holdings\", \"record_state\"]};",
+          "pm.test('status is 200', () => pm.response.to.have.status(200));",
+          "const path = pm.request.url.getPath();",
+          "if (path === '/health') {",
+          "  pm.test('health reports ok', () => pm.expect(pm.response.json().status).to.eql('ok'));",
+          "} else {",
+          "  const chart = path.split('/').pop();",
+          "  const rows = pm.response.json();",
+          "  pm.test('body is an array', () => pm.expect(rows).to.be.an('array'));",
+          "  const keys = CONTRACT[chart];",
+          "  if (keys) {",
+          "    pm.test('rows have exactly the contract keys', () => rows.forEach(r => pm.expect(Object.keys(r).sort()).to.eql(keys)));",
+          "  }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8006",
+      "description": "Base URL of the dashboard service."
+    }
+  ]
+}
