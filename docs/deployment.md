@@ -42,11 +42,26 @@ the image beside the registry's own and enables both on its development deploy. 
 then reaches the service at `http://<release>-dashboard-api.<namespace>`.
 
 - **Service:** `ClusterIP` only. Never attach it to a public gateway: the only client is the
-  dashboards BFF inside the cluster (see [Security](security.md)).
+  dashboards BFF (see [Security](security.md#network-exposure)).
 - **Probes:** readiness on `GET /health`; liveness on the TCP port, so a database outage takes the
   pod out of the Service instead of restarting it.
 - **Secrets:** `PGPASSWORD` from the registry's database Secret; `DATABASE_URL` carries no password.
 - **Resources:** `100m` / `256Mi` requested per replica. The work is I/O-bound.
+
+## Turning authentication on
+
+1. Create the Keycloak client and role, and grant the role to the dashboard's service account (see
+   [Configuration](configuration.md#keycloak-setup)). The livestock dashboard's deploy job does this when
+   its `dashboardApi.auth.enabled` is set.
+2. Set `AUTH_IAM_URL` on this service to the registry's IAM Service in the same namespace, for
+   example `http://commons-services-iam-staff-portal-api-pub`. Nothing else is environment-specific:
+   the trusted realms are read from IAM. In the registry chart, set it under the dashboard-api's
+   `env` values.
+3. Turn on client-credentials in the dashboard, then check its log: chart refreshes succeed, and
+   this service logs no `401` or `403`.
+
+Do steps 1 and 3 before or with step 2. In between, the dashboard serves its cached rows and logs
+failed refreshes.
 
 ## Sizing
 
@@ -87,6 +102,9 @@ per-request logs.
 
 | Symptom | Likely cause | Action |
 | --- | --- | --- |
+| Every chart answers `401` | The caller sends no token, or its token's `iss` is not a trusted issuer: not a realm of IAM's login providers, nor in `AUTH_ISSUER` | Turn on client-credentials in the dashboard. Compare the token's `iss` with the issuers in IAM's `login_providers` |
+| Every chart answers `403` | The caller's service account lacks `AUTH_ROLE` on `AUTH_AUDIENCE` | Grant the role ([Keycloak setup](configuration.md#keycloak-setup)) |
+| Every chart answers `503` | The service cannot read IAM (`AUTH_IAM_URL`) before it knows any issuer, or cannot fetch an issuer's signing keys | Check DNS, network and TLS from the container to IAM and to Keycloak. The log names which |
 | Container restarts, and the log says `DATABASE_URL` is missing | Required setting absent | Set `DATABASE_URL` |
 | `/health` returns 500 or the pod is not ready | Database unreachable, wrong credentials, or pool exhausted | Check network and DNS to Postgres, credentials, and `pg_stat_activity` |
 | A chart returns 500 with `relation "lr_rpt_holding" does not exist` | The reporting views have not been created in this database | Enable `reporting.views` in the registry's chart, or run its `reporting-views` compose service |

@@ -6,6 +6,26 @@
 - **Methods and responses:** every endpoint is `GET` and returns `application/json`.
 - **OpenAPI:** the generated schema is at `/openapi.json`, with an interactive UI at `/docs`.
 
+## Authentication
+
+When the service runs with authentication on (`AUTH_IAM_URL` or `AUTH_ISSUER` set), every `/api/v1/charts/*` request needs a bearer token:
+
+```
+Authorization: Bearer <access token>
+```
+
+The token is a Keycloak client-credentials token whose client holds the role `AUTH_ROLE` (default
+`charts:read`) on this service's client `AUTH_AUDIENCE` (default `livestock-registry-dashboard-api`).
+`GET /health` needs no token. For example:
+
+```bash
+TOKEN=$(curl -s -d grant_type=client_credentials -d client_id=livestock-registry-dashboard \
+  -d client_secret="$CLIENT_SECRET" "$ISSUER/protocol/openid-connect/token" | jq -r .access_token)
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8005/api/v1/charts/livestockKpis
+```
+
+See [Security](security.md#authentication) for what is checked.
+
 ## Conventions
 
 ### Response shape
@@ -209,6 +229,9 @@ Holdings per record status. This chart ignores the `ACTIVE` default, so it sees 
 
 | Status | When |
 | --- | --- |
+| 401 | Authentication on, and the token is missing or invalid (`WWW-Authenticate` says why) |
+| 403 | Valid token without the required role |
 | 404 | Unknown chart ID |
 | 422 | A query parameter has the wrong type |
 | 500 | Database error, for example the reporting views do not exist yet |
+| 503 | Authentication on, and the trusted issuers (IAM) or their signing keys cannot be fetched |
