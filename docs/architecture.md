@@ -57,6 +57,12 @@ Columns worth knowing:
 
 ## Design decisions
 
+- **Service-to-service tokens, not user tokens.** The only client is the dashboards BFF, which
+  caches rows across users and refreshes them with no user present. It proves who it is with a
+  client-credentials token from the registry's Keycloak, checked here against the realm's published
+  keys, so no call to Keycloak is made per request. The trusted realms are read from the registry's
+  IAM (`AUTH_IAM_URL`), so no realm URL is configured. Off until that or `AUTH_ISSUER` is set, for
+  deployments the network already isolates. See [Security](security.md#authentication).
 - **Reporting views, not register tables.** The register's schema belongs to the registry and
   changes with it. The views are the stable interface; a schema change is absorbed in the
   registry's own `reporting_views.sql`, reviewed with the change that caused it.

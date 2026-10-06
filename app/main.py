@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 import asyncpg
@@ -6,11 +7,27 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.dependencies import get_db_pool
 from app.api.routes.router import api_router
+from app.core.auth import get_verifier
 from app.core.config import settings
+
+log = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    verifier = get_verifier()
+    if verifier is None:
+        log.warning(
+            "Neither AUTH_IAM_URL nor AUTH_ISSUER is set: chart requests are not authenticated. "
+            "Keep this service private."
+        )
+    else:
+        log.info(
+            "chart requests need a token from %s with role %s on %s",
+            verifier.issuers.describe(),
+            verifier.role,
+            verifier.audience,
+        )
     # Initialize the database pool
     app.state.pool = await asyncpg.create_pool(
         settings.DATABASE_URL,
