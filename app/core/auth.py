@@ -195,7 +195,11 @@ class TrustedIssuers:
             self._read_at = time.monotonic()
 
 
-def _unauthorized(description: str) -> HTTPException:
+def _unauthorized(description: str, claims: dict[str, Any] | None = None) -> HTTPException:
+    # Logged with the claimed client and issuer (never the token), so a
+    # misconfigured caller can be told apart from noise.
+    claims = claims or {}
+    log.warning("rejected a token (%s): azp=%r iss=%r", description, claims.get("azp"), claims.get("iss"))
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail=description,
@@ -235,17 +239,18 @@ class TokenVerifier:
         # Read `iss` unverified only to pick the trusted issuer's keys; the
         # signature and the issuer are verified below.
         try:
-            claimed = jwt.decode(token, options={"verify_signature": False}).get("iss")
+            unverified = jwt.decode(token, options={"verify_signature": False})
         except jwt.InvalidTokenError as error:
             raise _unauthorized("Invalid token") from error
+        claimed = unverified.get("iss")
         if not isinstance(claimed, str) or not claimed:
-            raise _unauthorized("Invalid token")
+            raise _unauthorized("Invalid token", unverified)
         try:
             jwks_url = await self.issuers.jwks_url(claimed)
         except IssuersUnavailable as error:
             raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Token verification is unavailable") from error
         if jwks_url is None:
-            raise _unauthorized("Untrusted issuer")
+            raise _unauthorized("Untrusted issuer", unverified)
 
         try:
             claims = await run_in_threadpool(self._decode, token, claimed, jwks_url)
@@ -254,11 +259,15 @@ class TokenVerifier:
             raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Token verification is unavailable") from error
         except jwt.PyJWKClientError as error:
             # Typically a key id the realm does not publish.
-            raise _unauthorized("Unknown signing key") from error
+            raise _unauthorized("Unknown signing key", unverified) from error
         except jwt.ExpiredSignatureError as error:
-            raise _unauthorized("Token expired") from error
+            raise _unauthorized("Token expired", unverified) from error
+        except jwt.InvalidAudienceError as error:
+            raise _unauthorized("Wrong audience", unverified) from error
+        except jwt.MissingRequiredClaimError as error:
+            raise _unauthorized(f"Missing claim {error.claim}", unverified) from error
         except jwt.InvalidTokenError as error:
-            raise _unauthorized("Invalid token") from error
+            raise _unauthorized("Invalid token", unverified) from error
 
         roles = ((claims.get("resource_access") or {}).get(self.audience) or {}).get("roles") or []
         caller = Caller(client_id=str(claims.get("azp") or ""), subject=str(claims.get("sub") or ""))
