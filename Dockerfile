@@ -9,6 +9,10 @@ COPY --from=builder /app/wheels /wheels
 RUN pip install --no-cache /wheels/*
 
 COPY ./app /app/app
+# gunicorn (22+) opens a control socket under $HOME by default. Nothing uses
+# it, and on a read-only root filesystem it logs an error at every start. Set
+# through the environment so it also applies when a deployment overrides CMD.
+ENV GUNICORN_CMD_ARGS="--no-control-socket"
 # /health runs SELECT 1, so this also fails when the database is unreachable.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4).status == 200 else 1)"

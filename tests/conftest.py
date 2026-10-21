@@ -18,6 +18,7 @@ TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
 
 # The app's settings require DATABASE_URL at import time; the tests replace
 # the pool, so the value is never used to connect.
+os.environ.setdefault("AUTH_ENABLED", "false")  # explicit local test mode; auth fixtures enable it
 os.environ.setdefault("DATABASE_URL", "postgresql://unused@localhost/unused")
 
 import asyncpg  # noqa: E402

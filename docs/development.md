@@ -102,9 +102,7 @@ because FastAPI's `Depends()` defaults trigger it.
 
    ```python
    @router.get("/livestockByAgeGroup", response_model=Rows)
-   async def get_livestock_by_age_group(
-       filters: ChartFilters = Depends(), pool: asyncpg.Pool = Depends(get_db_pool)
-   ):
+   async def get_livestock_by_age_group(filters: ChartFilters = Depends(), pool: asyncpg.Pool = Depends(get_db_pool)):
        where = build_where_clause(filters, view="animal")
        query = f"""
            SELECT COALESCE(age_group, 'UNKNOWN') AS age_group, COALESCE(SUM(heads), 0)::bigint AS animals

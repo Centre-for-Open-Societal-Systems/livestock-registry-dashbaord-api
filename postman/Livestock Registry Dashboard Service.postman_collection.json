@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "b0dbaff5-70a5-5e9f-a95b-81f86d9f4175",
     "name": "Livestock Registry Dashboard Service",
-    "description": "Read-only aggregate API of the livestock registry, used by the OAN dashboards.\n\n- Every chart: `GET {{baseUrl}}/api/v1/charts/<chartId>` returns a JSON array of rows.\n- Filters (all optional, combined with AND) are included on each request but disabled; enable the ones you need. `all` or omitted means no filter.\n  - `region`, `zone`, `woreda`, `kebele`: P-codes, in any of the forms `ET04`, `region-ET04`, `REGION_ET04`.\n  - `recordState`: record status, case-insensitive. Without it, only ACTIVE records are counted (except `livestockByRecordState`).\n  - `state`: approval-workflow state (`DRAFT`, `KEBELE_APPROVED`, ..., `VERIFIED`).\n  - `species`: lookup key (`LIVESTOCK_SPECIES_CATTLE`), its last part (`CATTLE`) or the label.\n- Animal counts are head counts: a flock or set of hives recorded as one line counts its quantity.\n- The collection-level test checks status 200 and the exact response keys per chart. Example responses come from the service test fixture.\n\nSet `baseUrl` (collection variable, or the environment) to the service URL. The service has no authentication and is meant to be reachable on the private network only.",
+    "description": "Read-only aggregate API of the livestock registry, used by the OAN dashboards.\n\n- Every chart: `GET {{baseUrl}}/api/v1/charts/<chartId>` returns a JSON array of rows.\n- Filters (all optional, combined with AND) are included on each request but disabled; enable the ones you need. `all` or omitted means no filter.\n  - `region`, `zone`, `woreda`, `kebele`: P-codes, in any of the forms `ET04`, `region-ET04`, `REGION_ET04`.\n  - `recordState`: record status, case-insensitive. Without it, only ACTIVE records are counted (except `livestockByRecordState`).\n  - `state`: approval-workflow state (`DRAFT`, `KEBELE_APPROVED`, ..., `VERIFIED`).\n  - `species`: lookup key (`LIVESTOCK_SPECIES_CATTLE`), its last part (`CATTLE`) or the label.\n- Animal counts are head counts: a flock or set of hives recorded as one line counts its quantity.\n- The collection-level test checks status 200 and the exact response keys per chart. Example responses come from the service test fixture.\n\nSet `baseUrl` (collection variable, or the environment) to the service URL. Authentication is required by default; the service is intended for private-network callers.\n\nAuthentication is required by default. Set accessToken to a service-account token with this API audience and charts:read role. Keep token values in a local/secret environment, never in this file. /health stays public. AUTH_ENABLED=false is isolated local development only.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -20,7 +20,10 @@
             "health"
           ]
         },
-        "description": "Liveness and database connectivity (runs SELECT 1)."
+        "description": "Liveness and database connectivity (runs SELECT 1).",
+        "auth": {
+          "type": "noauth"
+        }
       },
       "response": [
         {
@@ -1254,6 +1257,21 @@
       "key": "baseUrl",
       "value": "http://localhost:8006",
       "description": "Base URL of the dashboard service."
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
     }
-  ]
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  }
 }
