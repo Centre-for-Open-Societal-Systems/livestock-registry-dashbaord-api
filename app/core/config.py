@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     # Service-to-service authentication of chart requests (app/core/auth.py).
     # Trusted token issuers: the realms behind the login providers of the
     # registry's IAM (its base URL, normally the in-namespace Service), and/or
-    # explicit Keycloak realm URLs, comma-separated. Both unset or empty turn
-    # authentication off, which is only safe while the network keeps every
-    # other client out.
+    # explicit Keycloak realm URLs, comma-separated. Trust is required unless
+    # AUTH_ENABLED=false is explicitly selected for isolated local development.
+    AUTH_ENABLED: bool = True
     AUTH_IAM_URL: str | None = None
     AUTH_ISSUER: str | None = None
     # How often IAM's login providers are read again.

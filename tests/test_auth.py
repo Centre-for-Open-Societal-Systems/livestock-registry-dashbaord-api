@@ -63,6 +63,7 @@ def published(monkeypatch):
             raise answer["value"]
         return answer["value"]
 
+    monkeypatch.setattr(settings, "AUTH_ENABLED", True)
     monkeypatch.setattr(settings, "AUTH_ISSUER", ISSUER + "/")  # trailing slash is tolerated
     monkeypatch.setattr(settings, "AUTH_IAM_URL", "")
     monkeypatch.setattr(settings, "AUTH_AUDIENCE", AUDIENCE)
@@ -87,7 +88,8 @@ async def call(path="/probe", bearer: str | None = None, target=probe) -> httpx.
         return await client.get(path, headers=headers)
 
 
-async def test_off_without_issuer(monkeypatch):
+async def test_explicitly_disabled_for_local_development(monkeypatch):
+    monkeypatch.setattr(settings, "AUTH_ENABLED", False)
     monkeypatch.setattr(settings, "AUTH_ISSUER", "")
     monkeypatch.setattr(settings, "AUTH_IAM_URL", "")
     auth.reset()
@@ -260,6 +262,7 @@ def iam(monkeypatch):
         state["fetched"].append(client.uri)
         return jwks()
 
+    monkeypatch.setattr(settings, "AUTH_ENABLED", True)
     monkeypatch.setattr(settings, "AUTH_ISSUER", "")
     monkeypatch.setattr(settings, "AUTH_IAM_URL", IAM + "/")
     monkeypatch.setattr(settings, "AUTH_AUDIENCE", AUDIENCE)
@@ -335,6 +338,7 @@ async def test_last_list_is_kept_while_iam_is_down(iam, monkeypatch):
 
 
 async def test_explicit_issuer_and_iam_combine(iam, monkeypatch):
+    monkeypatch.setattr(settings, "AUTH_ENABLED", True)
     monkeypatch.setattr(settings, "AUTH_ISSUER", ISSUER)
     auth.reset()
     assert (await call(bearer=token(iss=ISSUER))).status_code == 200
@@ -342,6 +346,7 @@ async def test_explicit_issuer_and_iam_combine(iam, monkeypatch):
 
 
 def test_jwks_override_needs_a_single_issuer(monkeypatch):
+    monkeypatch.setattr(settings, "AUTH_ENABLED", True)
     monkeypatch.setattr(settings, "AUTH_ISSUER", f"{ISSUER},{REALM_PUBLIC}")
     monkeypatch.setattr(settings, "AUTH_JWKS_URL", "http://keys.test/certs")
     auth.reset()
@@ -350,3 +355,45 @@ def test_jwks_override_needs_a_single_issuer(monkeypatch):
             auth.get_verifier()
     finally:
         auth.reset()
+
+
+async def test_missing_trust_fails_closed(monkeypatch):
+    monkeypatch.setattr(settings, "AUTH_ENABLED", True)
+    monkeypatch.setattr(settings, "AUTH_ISSUER", "")
+    monkeypatch.setattr(settings, "AUTH_IAM_URL", "")
+    auth.reset()
+    try:
+        with pytest.raises(ValueError, match="AUTH_IAM_URL or AUTH_ISSUER is required"):
+            auth.get_verifier()
+        assert (await call()).status_code == 503
+    finally:
+        auth.reset()
+
+
+async def test_concurrent_cold_iam_outage_is_throttled():
+    import asyncio
+
+    attempts = 0
+    entered = asyncio.Event()
+    release = asyncio.Event()
+    trust = auth.TrustedIssuers({}, "http://iam.test", 600)
+
+    async def discover(*_args):
+        nonlocal attempts
+        attempts += 1
+        entered.set()
+        await release.wait()
+        raise OSError("IAM is down")
+
+    # Control the discovery boundary, not time, so every caller queues before failure.
+    from unittest.mock import patch
+
+    with patch.object(auth, "run_in_threadpool", side_effect=discover):
+        first = asyncio.create_task(trust.jwks_url(ISSUER))
+        await entered.wait()
+        queued = [asyncio.create_task(trust.jwks_url(ISSUER)) for _ in range(7)]
+        await asyncio.sleep(0)
+        release.set()
+        results = await asyncio.gather(first, *queued, return_exceptions=True)
+    assert attempts == 1
+    assert all(isinstance(result, auth.IssuersUnavailable) for result in results)

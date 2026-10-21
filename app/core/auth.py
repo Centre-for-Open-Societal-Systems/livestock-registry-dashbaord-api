@@ -33,9 +33,8 @@ Answers follow RFC 6750: 401 with `WWW-Authenticate: Bearer` for a missing or
 invalid token, 403 (`insufficient_scope`) for a valid token without the role,
 and 503 when the trusted issuers or their signing keys cannot be fetched.
 
-Off while neither AUTH_IAM_URL nor AUTH_ISSUER is set: every request is then
-accepted, and the service must stay unreachable from outside its private
-network (see docs/security.md).
+Authentication is on by default and requires AUTH_IAM_URL or AUTH_ISSUER.
+AUTH_ENABLED=false is an explicit opt-out for isolated local development only.
 """
 
 import asyncio
@@ -177,6 +176,9 @@ class TrustedIssuers:
 
     async def _refresh(self) -> None:
         async with self._lock:
+            # Recheck after waiting: an earlier caller may have just failed.
+            if self._discovered is None and time.monotonic() - self._failed_at <= IAM_RETRY_SECONDS:
+                return
             # Another request may have refreshed while this one waited.
             if self._discovered is not None and time.monotonic() - self._read_at <= IAM_MISS_REFRESH_SECONDS:
                 return
@@ -284,10 +286,12 @@ class TokenVerifier:
 @cache
 def get_verifier() -> TokenVerifier | None:
     """The verifier for the configured issuers; None while authentication is off."""
+    if not settings.AUTH_ENABLED:
+        return None
     explicit = [_normalise(i) for i in (settings.AUTH_ISSUER or "").split(",") if i.strip()]
     iam_url = (settings.AUTH_IAM_URL or "").strip().rstrip("/") or None
     if not explicit and not iam_url:
-        return None
+        raise ValueError("AUTH_IAM_URL or AUTH_ISSUER is required while AUTH_ENABLED=true")
     jwks_override = (settings.AUTH_JWKS_URL or "").strip()
     if jwks_override and len(explicit) != 1:
         raise ValueError("AUTH_JWKS_URL needs exactly one AUTH_ISSUER")
@@ -303,7 +307,11 @@ def reset() -> None:
 
 async def require_caller(request: Request) -> Caller | None:
     """FastAPI dependency: the authenticated caller, or None while authentication is off."""
-    verifier = get_verifier()
+    try:
+        verifier = get_verifier()
+    except ValueError as error:
+        log.error("authentication configuration is invalid: %s", error)
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Token verification is unavailable") from error
     if verifier is None:
         return None
     scheme, _, token = request.headers.get("authorization", "").partition(" ")

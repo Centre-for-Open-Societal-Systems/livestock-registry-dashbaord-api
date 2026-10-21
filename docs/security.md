@@ -1,3 +1,9 @@
+> Authentication is required by default. The owning registry Helm chart supplies
+> `AUTH_ENABLED=true` and `AUTH_IAM_URL` (or `AUTH_ISSUER`). Missing trust stops startup;
+> requests also fail closed if configuration is invalid. `AUTH_ENABLED=false` is an
+> explicit opt-out for isolated local development only, never for a registry deployment.
+> Build, deployment and environment configuration belong to the owning registry CI/Helm.
+
 # Security
 
 ## Threat model
@@ -76,8 +82,8 @@ the database. `GET /health` stays open for probes; it reveals only that the serv
 The signing keys are cached for five minutes. A token with a key id the cache does not hold
 triggers one refetch, so Keycloak key rotation needs no restart.
 
-With neither `AUTH_IAM_URL` nor `AUTH_ISSUER` set, authentication is **off** and every request is
-accepted. The service logs a
+With neither `AUTH_IAM_URL` nor `AUTH_ISSUER` set, startup fails closed unless
+`AUTH_ENABLED=false` is explicitly selected for isolated local development. The service logs a
 warning at start-up. That is acceptable only while the network alone keeps other clients out.
 
 ### Network exposure

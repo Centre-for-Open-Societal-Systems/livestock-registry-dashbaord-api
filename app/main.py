@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
     verifier = get_verifier()
     if verifier is None:
         log.warning(
-            "Neither AUTH_IAM_URL nor AUTH_ISSUER is set: chart requests are not authenticated. "
+            "AUTH_ENABLED=false: chart requests are not authenticated (local development only). "
             "Keep this service private."
         )
     else:

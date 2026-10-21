@@ -1,3 +1,9 @@
+> Authentication is required by default. The owning registry Helm chart supplies
+> `AUTH_ENABLED=true` and `AUTH_IAM_URL` (or `AUTH_ISSUER`). Missing trust stops startup;
+> requests also fail closed if configuration is invalid. `AUTH_ENABLED=false` is an
+> explicit opt-out for isolated local development only, never for a registry deployment.
+> Build, deployment and environment configuration belong to the owning registry CI/Helm.
+
 # Deployment and operations
 
 ## Container image
@@ -48,20 +54,19 @@ then reaches the service at `http://<release>-dashboard-api.<namespace>`.
 - **Secrets:** `PGPASSWORD` from the registry's database Secret; `DATABASE_URL` carries no password.
 - **Resources:** `100m` / `256Mi` requested per replica. The work is I/O-bound.
 
-## Turning authentication on
+## Authentication rollout
 
-1. Create the Keycloak client and role, and grant the role to the dashboard's service account (see
-   [Configuration](configuration.md#keycloak-setup)). The livestock dashboard's deploy job does this when
-   its `dashboardApi.auth.enabled` is set.
-2. Set `AUTH_IAM_URL` on this service to the registry's IAM Service in the same namespace, for
-   example `http://commons-services-iam-staff-portal-api-pub`. Nothing else is environment-specific:
-   the trusted realms are read from IAM. In the registry chart, set it under the dashboard-api's
-   `env` values.
-3. Turn on client-credentials in the dashboard, then check its log: chart refreshes succeed, and
-   this service logs no `401` or `403`.
+The owning registry pipeline builds this image together with its dashboard UI.
+Registry Helm owns `dashboardApi.auth`: enable it and configure a trusted issuer
+or IAM URL there. The template emits AUTH_ENABLED, AUTH_ISSUER/AUTH_IAM_URL,
+AUTH_AUDIENCE and AUTH_ROLE; reserved auth settings must not also be placed in
+`dashboardApi.env`. Missing trust fails closed. AUTH_ENABLED=false is local only.
 
-Do steps 1 and 3 before or with step 2. In between, the dashboard serves its cached rows and logs
-failed refreshes.
+The registry-owned UI Helm chart provisions the service client/role and IAM tile,
+then checks anonymous/invalid-token 401 responses and real authenticated charts.
+The browser still requires its own IAM session and viewer role. Do not promote
+an older API image that ignores these settings, or disable staging/ownership gates
+to make a rollout pass. No secret value belongs in an image or committed values.
 
 ## Sizing
 
