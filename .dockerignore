@@ -1,0 +1,13 @@
+# No local credentials, Git metadata or reports enter image build contexts.
+.git
+.env
+.env.*
+!.env.example
+.venv
+**/__pycache__
+.pytest_cache
+.ruff_cache
+reports
+*.dump
+*.pem
+*.key
