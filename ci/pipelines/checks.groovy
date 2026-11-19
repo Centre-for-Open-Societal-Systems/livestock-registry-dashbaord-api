@@ -1,5 +1,6 @@
 pipeline {
-    agent { label 'vpn-agent2' }
+    // Docker only, no cluster or VPN access: any build agent, like the registries' build stages.
+    agent any
     options {
         timestamps()
         disableConcurrentBuilds()
