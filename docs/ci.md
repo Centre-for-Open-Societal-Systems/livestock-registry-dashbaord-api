@@ -1,7 +1,7 @@
 # CI and delivery boundary
 
 The root Jenkinsfile loads the validation-only pipeline in
-`ci/pipelines/checks.groovy`. Existing Docker-capable `vpn-agent2` is selected;
+`ci/pipelines/checks.groovy`. Any Docker-capable build agent runs it;
 no credential IDs or live jobs are introduced. GitHub Actions uses an owned
 PostgreSQL 15 service for reporting/authentication tests and builds the root
 Dockerfile independently. Both paths preserve nonzero exits and JUnit results.

@@ -21,9 +21,8 @@ JUnit reports are uploaded even on test failure. No workspace credentials,
 image publication, deployment, or external Postman workspace push is needed.
 Existing Postman collections remain the reusable external interface contract.
 
-The thin Jenkinsfile loads ci/pipelines/checks.groovy and uses the existing
-vpn-agent2 Docker-capable agent pattern. It is validation-only and requests no
-credentials. No Jenkins job is created or changed by this repository update.
+The thin Jenkinsfile loads ci/pipelines/checks.groovy and uses any Docker-capable build agent.
+It is validation-only and requests no credentials. No Jenkins job is created or changed by this repository update.
 The owning registry still builds/publishes/deploys its dashboard API at the same
 root Dockerfile path. Production acceptance must also verify native reporting
 views and authorized calls through the registry-owned BFF/IAM configuration.
